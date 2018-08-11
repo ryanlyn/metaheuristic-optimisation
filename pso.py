@@ -56,7 +56,6 @@ class ParticleSwarm:
     def _update_particle_vector(self, output_dict):
         prev_positions = output_dict['positions']
         prev_best_positions = output_dict['best_positions']
-        prev_evals = output_dict['evals']
         prev_best_evals = output_dict['best_evals']
         prev_velocities = output_dict['velocities']
         prev_swarm_eval = output_dict['swarm_eval']
