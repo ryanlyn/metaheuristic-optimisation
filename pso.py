@@ -9,7 +9,7 @@ class ParticleSwarm:
     φ_p = 2
     φ_g = 2
 
-    def __init__(self, fitness_func, X_0, X_range, n_particles=100, n_iterations=1000, random_state=None):
+    def __init__(self, fitness_func, X_0, X_range, n_particles=100, random_state=None):
         self.fitness_func = fitness_func
         self.X_0 = X_0
         self.n_x = len(X_0)
@@ -18,15 +18,14 @@ class ParticleSwarm:
         self.V_min = -np.abs(self.X_max - self.X_min)
         self.V_max = np.abs(self.X_max - self.X_min)
         self.n_particles = n_particles
-        self.n_iterations = n_iterations
         self.seed = random_state
 
     def __repr__(self):
-        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, n_particles={self.n_particles}, n_iterations={self.n_iterations})"
+        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, n_particles={self.n_particles})"
         return string
 
     def __str__(self):
-        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, n_particles={self.n_particles}, n_iterations={self.n_iterations})"
+        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, n_particles={self.n_particles})"
         return string
 
     def _initialise(self):
@@ -70,14 +69,14 @@ class ParticleSwarm:
         positions = prev_positions + velocities
 
         evals = self.fitness_func(*positions.T)
-        best_evals = np.where((evals > prev_best_evals), evals, prev_best_evals)
-        positions_mask = np.repeat((evals > prev_best_evals)[:, np.newaxis], self.n_x, axis=-1)
+        best_evals = np.where((evals < prev_best_evals), evals, prev_best_evals)
+        positions_mask = np.repeat((evals < prev_best_evals)[:, np.newaxis], self.n_x, axis=-1)
         best_positions = np.where(positions_mask, positions, prev_best_positions)
 
         best_new_eval = best_evals.max()
         best_new_position = best_positions[best_evals.argmax()]
 
-        if best_new_eval > prev_swarm_eval:
+        if best_new_eval < prev_swarm_eval:
             swarm_eval = best_new_eval
             swarm_position = best_new_position
         else:
@@ -93,5 +92,14 @@ class ParticleSwarm:
                        'swarm_position': swarm_position}
         return output_dict
 
-    def optimise(self):
-        pass
+    def optimise(self, n_iterations=1000):
+        output_dict = self._initialise()
+
+        iteration = 0
+        while iteration < n_iterations:
+            output_dict = self._update_particle_vector(output_dict)
+            iteration += 1
+
+        results = {'best_score': output_dict['swarm_eval'],
+                   'best_position': output_dict['swarm_position']}
+        return results
