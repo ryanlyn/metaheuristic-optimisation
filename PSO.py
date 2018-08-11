@@ -4,38 +4,48 @@ import time
 
 import numpy as np 
 
-class PSO:
-    _version = '1.0'
+class BasePSO:
+    _version = '1.1'
     ω = 1
     φ_p = 2
     φ_g = 2
 
-    def __init__(self, fitness_func, X_0, X_range, n_particles=100, random_state=None):
+    def __init__(self, fitness_func, dimensions, X_range, pop_size=100, random_state=None, vectorised=False):
         self.fitness_func = fitness_func
-        self.X_0 = X_0
-        self.n_x = len(X_0)
+        self.dimensions = dimensions
+
+        assert len(X_range) == self.dimensions 
         self.X_min = np.array([x_range[0] for x_range in X_range])
         self.X_max = np.array([x_range[1] for x_range in X_range])
         self.V_min = -np.abs(self.X_max - self.X_min)
         self.V_max = np.abs(self.X_max - self.X_min)
-        self.n_particles = n_particles
+
+        self.pop_size = pop_size
         self.seed = random_state
+        self.vectorised = vectorised
 
     def __repr__(self):
-        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, n_particles={self.n_particles})"
+        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, pop_size={self.pop_size})"
         return string
 
     def __str__(self):
-        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, n_particles={self.n_particles})"
+        string = f"{self.__class__.__name__}(fitness_func, X_0, X_range, pop_size={self.pop_size})"
         return string
 
     def _initialise(self):
         np.random.seed(self.seed)
 
-        positions = np.random.uniform(low=self.X_min, high=self.X_max, size=(self.n_particles, self.n_x))
+        positions = np.random.uniform(low=self.X_min, high=self.X_max, size=(self.pop_size, self.dimensions))
         best_positions = positions
 
-        evals = self.fitness_func(*best_positions.T)
+        if self.vectorised is True:
+            evals = self.fitness_func(*best_positions.T)
+        else:
+            evals = []
+            for p in best_positions:
+                evals.append(self.fitness_func(*p))
+            evals = np.array(evals)
+
         best_evals = evals
 
         swarm_eval = best_evals.max()
@@ -43,7 +53,7 @@ class PSO:
 
         assert self.fitness_func(*swarm_position) == swarm_eval
 
-        velocities = np.random.uniform(low=self.V_min, high=self.V_max, size=(self.n_particles, self.n_x))
+        velocities = np.random.uniform(low=self.V_min, high=self.V_max, size=(self.pop_size, self.dimensions))
 
         output_dict = {'positions': positions,
                        'best_positions': best_positions,
@@ -62,15 +72,23 @@ class PSO:
         prev_swarm_eval = output_dict['swarm_eval']
         prev_swarm_position = output_dict['swarm_position']
         
-        ρ_p = np.random.uniform(low=0, high=1, size=(self.n_particles, self.n_x))
-        ρ_g = np.random.uniform(low=0, high=1, size=(self.n_particles, self.n_x))
+        ρ_p = np.random.uniform(low=0, high=1, size=(self.pop_size, self.dimensions))
+        ρ_g = np.random.uniform(low=0, high=1, size=(self.pop_size, self.dimensions))
 
         velocities = self.ω * prev_velocities + self.φ_p * ρ_p * (prev_best_positions - prev_positions) + self.φ_g * ρ_g * (prev_swarm_position - prev_positions)
         positions = prev_positions + velocities
 
+        if self.vectorised is True:
+            evals = self.fitness_func(*best_positions.T)
+        else:
+            evals = []
+            for p in best_positions:
+                evals.append(self.fitness_func(*p))
+            evals = np.array(evals)
+            
         evals = self.fitness_func(*positions.T)
         best_evals = np.where((evals < prev_best_evals), evals, prev_best_evals)
-        positions_mask = np.repeat((evals < prev_best_evals)[:, np.newaxis], self.n_x, axis=-1)
+        positions_mask = np.repeat((evals < prev_best_evals)[:, np.newaxis], self.dimensions, axis=-1)
         best_positions = np.where(positions_mask, positions, prev_best_positions)
 
         best_new_eval = best_evals.max()
