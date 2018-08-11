@@ -1,9 +1,10 @@
 import os
 import sys
+import time
 
 import numpy as np 
 
-class ParticleSwarm:
+class PSO:
     _version = '1.0'
     ω = 1
     φ_p = 2
@@ -91,14 +92,24 @@ class ParticleSwarm:
                        'swarm_position': swarm_position}
         return output_dict
 
-    def optimise(self, n_iterations=1000):
+    def optimise(self, n_iterations=1000, verbose=True):
+        start = time.time()
         output_dict = self._initialise()
 
-        iteration = 0
-        while iteration < n_iterations:
+        iteration = 1
+        while iteration <= n_iterations:
+            if verbose is True:
+                string = f"Updating iteration {iteration} out of {n_iterations} ({iteration/n_iterations:.1%})"
+                sys.stdout.flush()
+                sys.stdout.write(string + '\r')       
+
             output_dict = self._update_particle_vector(output_dict)
             iteration += 1
 
+        end = time.time()
+        total_time = end - start
+
         results = {'best_score': output_dict['swarm_eval'],
-                   'best_position': output_dict['swarm_position']}
+                   'best_position': output_dict['swarm_position'],
+                   'total_time': total_time}
         return results
