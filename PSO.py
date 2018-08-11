@@ -5,10 +5,10 @@ import time
 import numpy as np 
 
 class BasePSO:
-    _version = '1.5'
+    _version = '1.6'
     ω = 1
-    φ_p = 1
-    φ_g = 1
+    φ_p = 2
+    φ_g = 2
 
     def __init__(self, fitness_func, dimensions, X_range, pop_size=100, random_state=None, vectorised=False):
         self.fitness_func = fitness_func
@@ -101,7 +101,6 @@ class BasePSO:
             swarm_eval = prev_swarm_eval
             swarm_position = prev_swarm_position
 
-        print(swarm_eval, swarm_position)
         output_dict = {'positions': positions,
                        'best_positions': best_positions,
                        'evals': evals,
@@ -117,13 +116,15 @@ class BasePSO:
 
         iteration = 1
         while iteration <= n_iterations:
-            if verbose is True:
-                string = f"Updating iteration {iteration} out of {n_iterations} ({iteration/n_iterations:.1%})"
-                sys.stdout.flush()
-                sys.stdout.write(string + '\r')       
-
-            _ = self._update_particle_vector(output_dict)
+            _  = self._update_particle_vector(output_dict)
             output_dict = _
+
+            if verbose is True:
+                string_1 = f"Updated iteration {iteration} out of {n_iterations} ({iteration/n_iterations:.1%})"
+                string_2 = f"Best fitness score: {output_dict['swarm_eval']}"
+                sys.stdout.flush()
+                sys.stdout.write(string_1 + ' --- ' + string_2 + '\r')
+
             iteration += 1
 
         end = time.time()
