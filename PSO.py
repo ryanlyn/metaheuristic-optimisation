@@ -5,10 +5,10 @@ import time
 import numpy as np 
 
 class BasePSO:
-    _version = '1.1'
+    _version = '1.5'
     ω = 1
-    φ_p = 2
-    φ_g = 2
+    φ_p = 1
+    φ_g = 1
 
     def __init__(self, fitness_func, dimensions, X_range, pop_size=100, random_state=None, vectorised=False):
         self.fitness_func = fitness_func
@@ -36,20 +36,20 @@ class BasePSO:
         np.random.seed(self.seed)
 
         positions = np.random.uniform(low=self.X_min, high=self.X_max, size=(self.pop_size, self.dimensions))
-        best_positions = positions
 
         if self.vectorised is True:
-            evals = self.fitness_func(*best_positions.T)
+            evals = self.fitness_func(*positions.T)
         else:
             evals = []
-            for p in best_positions:
+            for p in positions:
                 evals.append(self.fitness_func(*p))
             evals = np.array(evals)
 
         best_evals = evals
+        best_positions = positions
 
-        swarm_eval = best_evals.max()
-        swarm_position = best_positions[best_evals.argmax()]
+        swarm_eval = best_evals.min()
+        swarm_position = best_positions[best_evals.argmin()]
 
         assert self.fitness_func(*swarm_position) == swarm_eval
 
@@ -76,23 +76,23 @@ class BasePSO:
         ρ_g = np.random.uniform(low=0, high=1, size=(self.pop_size, self.dimensions))
 
         velocities = self.ω * prev_velocities + self.φ_p * ρ_p * (prev_best_positions - prev_positions) + self.φ_g * ρ_g * (prev_swarm_position - prev_positions)
+
         positions = prev_positions + velocities
 
         if self.vectorised is True:
-            evals = self.fitness_func(*best_positions.T)
+            evals = self.fitness_func(*positions.T)
         else:
             evals = []
-            for p in best_positions:
+            for p in positions:
                 evals.append(self.fitness_func(*p))
             evals = np.array(evals)
-            
-        evals = self.fitness_func(*positions.T)
+
         best_evals = np.where((evals < prev_best_evals), evals, prev_best_evals)
         positions_mask = np.repeat((evals < prev_best_evals)[:, np.newaxis], self.dimensions, axis=-1)
         best_positions = np.where(positions_mask, positions, prev_best_positions)
 
-        best_new_eval = best_evals.max()
-        best_new_position = best_positions[best_evals.argmax()]
+        best_new_eval = best_evals.min()
+        best_new_position = best_positions[best_evals.argmin()]
 
         if best_new_eval < prev_swarm_eval:
             swarm_eval = best_new_eval
@@ -101,6 +101,7 @@ class BasePSO:
             swarm_eval = prev_swarm_eval
             swarm_position = prev_swarm_position
 
+        print(swarm_eval, swarm_position)
         output_dict = {'positions': positions,
                        'best_positions': best_positions,
                        'evals': evals,
@@ -121,7 +122,8 @@ class BasePSO:
                 sys.stdout.flush()
                 sys.stdout.write(string + '\r')       
 
-            output_dict = self._update_particle_vector(output_dict)
+            _ = self._update_particle_vector(output_dict)
+            output_dict = _
             iteration += 1
 
         end = time.time()
