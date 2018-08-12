@@ -25,11 +25,11 @@ class ParticleSwarm:
         self.vectorised = vectorised
 
     def __repr__(self):
-        string = f"{self.__class__.__name__}(fitness_func, dimensions={self.dimensions}, X_range, pop_size={self.pop_size}, random_state={self.random_state}, vectorised={self.vectorised})"
+        string = f"{self.__class__.__name__}(fitness_func, dimensions={self.dimensions}, X_range, pop_size={self.pop_size}, random_state={self.seed}, vectorised={self.vectorised})"
         return string
 
     def __str__(self):
-        string = f"{self.__class__.__name__}(fitness_func, dimensions={self.dimensions}, X_range, pop_size={self.pop_size}, random_state={self.random_state}, vectorised={self.vectorised})"
+        string = f"{self.__class__.__name__}(fitness_func, dimensions={self.dimensions}, X_range, pop_size={self.pop_size}, random_state={self.seed}, vectorised={self.vectorised})"
         return string
 
     def _initialise(self):
