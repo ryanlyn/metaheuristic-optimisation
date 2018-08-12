@@ -4,7 +4,7 @@ import time
 
 import numpy as np 
 
-class BasePSO:
+class ParticleSwarm:
     _version = '1.6'
     ω = 1
     φ_p = 2
